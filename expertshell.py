@@ -6,6 +6,15 @@ def main():
     Main
     :return:
     """
+    expert = Expert
+    print ("Hello, Welcome to Our Expert System Shell!")
+    while True:
+        data = input("> ")
+        feedback = expert.parse_input(expert,data)
+        if not feedback:
+            print("Wrong command!")
+            break
+    return 0
 
 class Expert(object):
 
@@ -28,16 +37,21 @@ class Expert(object):
             elif "->" in input:
                 teach, expression, arrow, value = input.split()
                 self.teach_rule(expression, value)
+            return "Teach"
         elif input.startwith("List"):
             self.list_all()
+            return "List"
         elif input.startwith("Learn"):
             self.learn_rules()
+            return "Learn"
         elif input.startwith("Query"):
             q, query = input.split()
             self.query(query)
+            return "Query"
         elif input.startwith("Why"):
             w, question = input.split()
             self.why(question)
+            return "Why"
 
     def teach_variable(self, varType, varName, strValue):
         if varType == 'R' and self.rootVars.get(varName) is None:
