@@ -41,16 +41,46 @@ class Expert(object):
 
     def teach_variable(self, varType, varName, strValue):
         if varType == 'R' and self.rootVars.get(varName) is None:
-            self.rootVars[varName] = [strValue, False]
+            # string text, boolean value, was teached (boolean)
+            self.rootVars[varName] = [strValue, False, False]
         if varType == 'S' and self.learnedVars.get(varName) is None:
-            self.learnedVars[varName] = [strValue, False]
+            self.learnedVars[varName] = [strValue, False, False]
 
     def define_variable(self, varName, boolean):
         if self.rootVars.get(varName):
             self.rootVars[varName][1] = boolean
+            if self.rootVars[varName][2]:
+                for k, v in self.learnedVars.items():
+                    self.learnedVars[k] = [v[0], v[1], False]
+            self.rootVars[varName][2] = True
 
-    def teach_rule(self, expr, val):
-
+    def teach_rule(self, expr, varName):
+        copy = expr
+        copy.replace('&', ' ')
+        copy.replace('|', ' ')
+        copy.replace('!', ' ')
+        copy.replace('(', ' ')
+        copy.replace(')', ' ')
+        variables = copy.split()
+        if not self.learnedVars.get(varName):
+            return False
+        for v in variables:
+            if not self.rootVars.get(v) and not self.learnedVars.get(v):
+                return False
+            elif self.rootVars.get(v):
+                if self.rootVars[v][1]:
+                    expr.replace(v, 'True')
+                else:
+                    expr.replace(v, 'False')
+            elif self.learnedVars.get(v):
+                if self.learnedVars[v][1]:
+                    expr.replace(v, 'True')
+                else:
+                    expr.replace(v, 'False')
+        expr.replace('&', ' and ')
+        expr.replace('|', ' or ')
+        expr.replace('!', ' not ')
+        self.learnedVars[varName] = [self.learnedVars[varName][0], eval(expr)]
 
     def list_all(self):
         rootVarsStr = 'Root Variables: \n'
@@ -76,6 +106,9 @@ class Expert(object):
 
     def why(self, question):
         pass
+
+    def parse_expr(self, expr):
+
 
 
 if __name__ == '__main__':
