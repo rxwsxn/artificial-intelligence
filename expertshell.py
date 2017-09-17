@@ -1,4 +1,5 @@
 # CS 4710
+from collections import OrderedDict
 
 def main():
     """
@@ -8,26 +9,45 @@ def main():
 def parse_input(input):
     pass
 
-def teach_variable(var):
-    pass
+class Expert(object):
 
-def define_variable(rule):
-    pass
+    def __init__(self):
+        self.rootVars = OrderedDict()
+        self.learnedVars = OrderedDict()
+        self.rules = OrderedDict()
+        self.facts = OrderedDict()
+        self.whyExpr = OrderedDict()
 
-def teach_rule(rule):
-    pass
+    def teach_variable(self, varType, varName, strValue):
+        if varType == 'R' and self.rootVars.get(varName) is None:
+            self.rootVars[varName] = [strValue, False]
+        if varType == 'S' and self.learnedVars.get(varName) is None:
+            self.learnedVars[varName] = [strValue, False]
 
-def list_rules():
-    pass
+    def define_variable(self, varName, boolean):
+        if self.rootVars.get(varName):
+            self.rootVars[varName][1] = boolean
 
-def learn_rules():
-    pass
+    def teach_rule(self, rule):
+        pass
 
-def query(exp):
-    pass
+    def list_rules(self):
+        rootVar = 'Root Variables: \n'
+        learnedVar = '\nLearned Variables: \n'
+        facts = '\nFacts: \n'
+        rules = '\nRules: \n'
 
-def why(exp):
-    pass
+        for k, v in variables.items():
+
+
+    def learn_rules(self):
+        pass
+
+    def query(self, expr):
+        pass
+
+    def why(self, expr):
+        pass
 
 
 if __name__ == '__main__':
