@@ -6,10 +6,9 @@ def main():
     Main
     :return:
     """
-def parse_input(input):
-    pass
 
 class Expert(object):
+
 
     def __init__(self):
         self.rootVars = OrderedDict()
@@ -17,6 +16,15 @@ class Expert(object):
         self.rules = OrderedDict()
         self.facts = OrderedDict()
         self.whyExpr = OrderedDict()
+
+    def parse_input(self, input):
+        if input.startwith("Teach"):
+            if input.endwith("/"""):
+                teach, varType, varName, equal, strValue = input.split()
+                self.teach_variable(varType, varName, strValue)
+            if input.endwith("False") or input.endwith("True"):
+                teach, var, equal, boolean = input.split()
+                self.define_variable(var, boolean)
 
     def teach_variable(self, varType, varName, strValue):
         if varType == 'R' and self.rootVars.get(varName) is None:
@@ -37,7 +45,6 @@ class Expert(object):
         facts = '\nFacts: \n'
         rules = '\nRules: \n'
 
-        for k, v in variables.items():
 
 
     def learn_rules(self):
