@@ -15,7 +15,7 @@ class Expert(object):
         self.rootVars = OrderedDict()
         self.learnedVars = OrderedDict()
         self.rules = OrderedDict()
-        self.facts = OrderedDict()
+        self.facts = []
         self.whyExpr = OrderedDict()
 
     def teach_variable(self, varType, varName, strValue):
@@ -32,13 +32,20 @@ class Expert(object):
         pass
 
     def list_rules(self):
-        rootVar = 'Root Variables: \n'
-        learnedVar = '\nLearned Variables: \n'
-        facts = '\nFacts: \n'
-        rules = '\nRules: \n'
+        rootVarsStr = 'Root Variables: \n'
+        learnedVarsStr = '\nLearned Variables: \n'
+        factsStr = '\nFacts: \n'
+        rulesStr = '\nRules: \n'
 
-        for k, v in variables.items():
-
+        for k, v in self.rootVars.items():
+            rootVarsStr += '\t {} = "{}"\n'.format(k, v)
+        for k, v in self.learnedVars.items():
+            learnedVarsStr += '\t {} = "{}"\n'.format(k, v)
+        for k, v in self.rules.items():
+            rulesStr += '\t {}\n'.format(v)
+        for v in self.facts:
+            factsStr += '\t {}\n'.format(v)
+        return rootVarsStr + learnedVarsStr + factsStr + rulesStr
 
     def learn_rules(self):
         pass
