@@ -14,7 +14,7 @@ class Expert(object):
         self.rootVars = OrderedDict()
         self.learnedVars = OrderedDict()
         self.rules = OrderedDict()
-        self.facts = OrderedDict()
+        self.facts = []
         self.whyExpr = OrderedDict()
 
     def parse_input(self, input):
@@ -41,33 +41,75 @@ class Expert(object):
 
     def teach_variable(self, varType, varName, strValue):
         if varType == 'R' and self.rootVars.get(varName) is None:
-            self.rootVars[varName] = [strValue, False]
+            # string text, boolean value, was teached (boolean)
+            self.rootVars[varName] = [strValue, False, False]
         if varType == 'S' and self.learnedVars.get(varName) is None:
-            self.learnedVars[varName] = [strValue, False]
+            self.learnedVars[varName] = [strValue, False, False]
 
     def define_variable(self, varName, boolean):
         if self.rootVars.get(varName):
             self.rootVars[varName][1] = boolean
+            if self.rootVars[varName][2]:
+                for k, v in self.learnedVars.items():
+                    self.learnedVars[k] = [v[0], v[1], False]
+            self.rootVars[varName][2] = True
 
-    def teach_rule(self, expression, value):
-        pass
+
+    def teach_rule(self, expr, val):
+        self.learnedVars[val] = [self.learnedVars[val][0], self.parse_expr(expr, val)]
 
     def list_all(self):
-        rootVar = 'Root Variables: \n'
-        learnedVar = '\nLearned Variables: \n'
-        facts = '\nFacts: \n'
-        rules = '\nRules: \n'
+        rootVarsStr = 'Root Variables: \n'
+        learnedVarsStr = '\nLearned Variables: \n'
+        factsStr = '\nFacts: \n'
+        rulesStr = '\nRules: \n'
 
-
+        for k, v in self.rootVars.items():
+            rootVarsStr += '\t {} = "{}"\n'.format(k, v)
+        for k, v in self.learnedVars.items():
+            learnedVarsStr += '\t {} = "{}"\n'.format(k, v)
+        for k, v in self.rules.items():
+            rulesStr += '\t {} -> {}\n'.format(k, v)
+        for v in self.facts:
+            factsStr += '\t {}\n'.format(v)
+        return rootVarsStr + learnedVarsStr + factsStr + rulesStr
 
     def learn_rules(self):
         pass
 
     def query(self, expr):
-        pass
+        self.learnedVars[val] = [self.l]
 
     def why(self, question):
         pass
+
+    def parse_expr(self, expr):
+        copy = expr
+        copy.replace('&', ' ')
+        copy.replace('|', ' ')
+        copy.replace('!', ' ')
+        copy.replace('(', ' ')
+        copy.replace(')', ' ')
+        variables = copy.split()
+        if not self.learnedVars.get(val):
+            return False
+        for v in variables:
+            if not self.rootVars.get(v) and not self.learnedVars.get(v):
+                return False
+            elif self.rootVars.get(v):
+                if self.rootVars[v][1]:
+                    expr.replace(v, 'True')
+                else:
+                    expr.replace(v, 'False')
+            elif self.learnedVars.get(v):
+                if self.learnedVars[v][1]:
+                    expr.replace(v, 'True')
+                else:
+                    expr.replace(v, 'False')
+        expr.replace('&', ' and ')
+        expr.replace('|', ' or ')
+        expr.replace('!', ' not ')
+        return eval(expr)
 
 
 if __name__ == '__main__':
