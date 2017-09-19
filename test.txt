@@ -4,3 +4,4 @@ List
 Teach -L V = "Bong is ice cream"
 Teach S -> V
 List
+Query S

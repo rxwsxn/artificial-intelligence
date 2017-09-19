@@ -46,7 +46,7 @@ class Expert(object):
                 self.teach_rule(expression, value)
             return "Teach"
         elif input.startswith("List"):
-            print(self.list_all())
+            self.list_all()
             return "List"
         elif input.startswith("Learn"):
             self.learn_rules()
@@ -91,7 +91,7 @@ class Expert(object):
             rulesStr += '\t {} -> {}\n'.format(k, v)
         for v in self.facts:
             factsStr += '\t {}\n'.format(v)
-        return rootVarsStr + learnedVarsStr + factsStr + rulesStr
+        print(rootVarsStr + learnedVarsStr + factsStr + rulesStr)
 
     def learn_rules(self):
         # worst case learning scenario, results in O(n^2) time
@@ -103,11 +103,15 @@ class Expert(object):
                     self.learnedVars[3] = True
                 
     def query(self, expr):
+        if expr in self.facts:
+            return True
         if self.all_valid(expr):
-            return self.parse_expr(expr)
+            print(self.parse_expr(expr))
 
     def why(self, question):
-        pass
+        factKnown = "I know that"
+        ruleApplied = "Because "
+        conclusion = "Thus I know that "
 
     def all_valid(self, expr):
         variables = re.findall(r"[\w']+", expr)
@@ -120,12 +124,12 @@ class Expert(object):
         variables = re.findall(r"[\w']+", expr)
         for v in variables:
             if self.rootVars.get(v):
-                expr.replace(v, 'True' if self.rootVars[v][1] else 'False')
+                expr = expr.replace(v, 'True' if self.rootVars[v][1] else 'False')
             elif self.learnedVars.get(v):
-                expr.replace(v, 'True' if self.learnedVars[v][1] else 'False')
-        expr.replace('&', ' and ')
-        expr.replace('|', ' or ')
-        expr.replace('!', ' not ')
+                expr = expr.replace(v, 'True' if self.learnedVars[v][1] else 'False')
+        expr = expr.replace('&', ' and ')
+        expr = expr.replace('|', ' or ')
+        expr = expr.replace('!', ' not ')
         return eval(expr)
 
 
