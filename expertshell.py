@@ -55,22 +55,21 @@ class Expert(object):
 
     def teach_variable(self, varType, varName, strValue):
         if varType == 'R' and self.rootVars.get(varName) is None:
-            # string text, boolean value, was teached (boolean)
+            # string text, boolean value, was taught (boolean)
             self.rootVars[varName] = [strValue, False, False]
         if varType == 'S' and self.learnedVars.get(varName) is None:
             self.learnedVars[varName] = [strValue, False, False]
 
     def define_variable(self, varName, boolean):
         if self.rootVars.get(varName):
-            self.rootVars[varName][1] = boolean
-            if self.rootVars[varName][2]:
+            if not self.rootVars[varName][1] == boolean:
                 for k, v in self.learnedVars.items():
                     self.learnedVars[k] = [v[0], v[1], False]
-            self.rootVars[varName][2] = True
+            self.rootVars[varName][1] = boolean
 
 
     def teach_rule(self, expr, val):
-        self.learnedVars[val] = [self.learnedVars[val][0], self.parse_expr(expr, val)]
+        self.learnedVars[val] = [self.learnedVars[val][0], self.parse_expr(expr, val), True]
 
     def list_all(self):
         rootVarsStr = 'Root Variables: \n'
@@ -89,10 +88,14 @@ class Expert(object):
         return rootVarsStr + learnedVarsStr + factsStr + rulesStr
 
     def learn_rules(self):
-        pass
-
+        for i in range(len(self.rules)):
+            for expr, var in self.rules:
+                if not var in self.facts:
+                self.learnedVars[2] = self.parse_expr(expr)
+                self.learnedVars[3] = True
+                
     def query(self, expr):
-        self.learnedVars[val] = [self.l]
+        pass
 
     def why(self, question):
         pass
@@ -109,6 +112,7 @@ class Expert(object):
             return False
         for v in variables:
             if not self.rootVars.get(v) and not self.learnedVars.get(v):
+                # return false means ignoring the expression
                 return False
             elif self.rootVars.get(v):
                 if self.rootVars[v][1]:
