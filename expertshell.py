@@ -24,7 +24,7 @@ class Expert(object):
         self.rootVars = OrderedDict() # { (key) variable : (value) [str, booleanValue, taughtBoolean] }
         self.learnedVars = OrderedDict() # { (key) variable : (value) [str, booleanValue, taughtBoolean] }
         self.rules = OrderedDict() # { (key) expression : (value) var }
-        self.facts = []
+        self.facts = [] # currently not used
         self.whyExpr = OrderedDict()
 
     def parse_input(self, input):
@@ -68,7 +68,8 @@ class Expert(object):
             self.rootVars[varName][1] = boolean
 
     def teach_rule(self, expr, val):
-        self.rules[expr] = val
+        if self.all_valid(expr):
+            self.rules[expr] = val
 
     def list_all(self):
         rootVarsStr = 'Root Variables: \n'
@@ -87,6 +88,8 @@ class Expert(object):
         return rootVarsStr + learnedVarsStr + factsStr + rulesStr
 
     def learn_rules(self):
+        # worst case learning scenario, results in O(n^2) time
+        # can have further optimizations
         for i in range(len(self.rules)):
             for expr, var in self.rules:
                 if not var in self.facts:
