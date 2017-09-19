@@ -1,5 +1,6 @@
 # CS 4710
 from collections import OrderedDict
+import re
 
 def main():
     """
@@ -55,7 +56,7 @@ class Expert(object):
 
     def teach_variable(self, varType, varName, strValue):
         if varType == 'R' and self.rootVars.get(varName) is None:
-            # string text, boolean value, was teached (boolean)
+            # string text, boolean value, has been teached (always false for root variables initially??) (boolean)
             self.rootVars[varName] = [strValue, False, False]
         if varType == 'S' and self.learnedVars.get(varName) is None:
             self.learnedVars[varName] = [strValue, False, False]
@@ -63,14 +64,17 @@ class Expert(object):
     def define_variable(self, varName, boolean):
         if self.rootVars.get(varName):
             self.rootVars[varName][1] = boolean
-            if self.rootVars[varName][2]:
-                for k, v in self.learnedVars.items():
+            if self.rootVars[varName][2]:  # if set to True
+                for k, v in self.learnedVars.items(): # set all learned vars to False per assignment
                     self.learnedVars[k] = [v[0], v[1], False]
             self.rootVars[varName][2] = True
 
-
     def teach_rule(self, expr, val):
-        self.learnedVars[val] = [self.learnedVars[val][0], self.parse_expr(expr, val)]
+        self.rules[val] = 
+        # self.learnedVars[val] = [self.learnedVars[val][0], self.parse_expr(expr, val)]
+
+    def learn_rules(self):
+        pass
 
     def list_all(self):
         rootVarsStr = 'Root Variables: \n'
@@ -88,9 +92,6 @@ class Expert(object):
             factsStr += '\t {}\n'.format(v)
         return rootVarsStr + learnedVarsStr + factsStr + rulesStr
 
-    def learn_rules(self):
-        pass
-
     def query(self, expr):
         self.learnedVars[val] = [self.l]
 
@@ -98,28 +99,17 @@ class Expert(object):
         pass
 
     def parse_expr(self, expr):
-        copy = expr
-        copy.replace('&', ' ')
-        copy.replace('|', ' ')
-        copy.replace('!', ' ')
-        copy.replace('(', ' ')
-        copy.replace(')', ' ')
-        variables = copy.split()
+        val = expr.split(' -> ')[1]
         if not self.learnedVars.get(val):
             return False
+        variables = re.findall(r"[\w']+", expr)
         for v in variables:
             if not self.rootVars.get(v) and not self.learnedVars.get(v):
                 return False
             elif self.rootVars.get(v):
-                if self.rootVars[v][1]:
-                    expr.replace(v, 'True')
-                else:
-                    expr.replace(v, 'False')
+                expr.replace(v, 'True' if self.rootVars[v][1] else 'False')
             elif self.learnedVars.get(v):
-                if self.learnedVars[v][1]:
-                    expr.replace(v, 'True')
-                else:
-                    expr.replace(v, 'False')
+                expr.replace(v, 'True' if self.learnedVars[v][1] else 'False')
         expr.replace('&', ' and ')
         expr.replace('|', ' or ')
         expr.replace('!', ' not ')
