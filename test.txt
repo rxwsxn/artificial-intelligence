@@ -1,0 +1,6 @@
+Teach -R S = "Sam likes ice cream"
+Teach S = true
+List
+Teach -L V = "Bong is ice cream"
+Teach S -> V
+List

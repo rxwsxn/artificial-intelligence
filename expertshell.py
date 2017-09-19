@@ -7,18 +7,23 @@ def main():
     Main
     :return:
     """
-    expert = Expert
-    print ("Hello, Welcome to Our Expert System Shell!")
-    while True:
-        data = input("> ")
-        feedback = expert.parse_input(expert,data)
-        if not feedback:
-            print("Wrong command!")
-            break
+    expert = Expert()
+    print("Hello, Welcome to Our Expert System Shell!")
+    with open('test.txt') as f:
+        lines = f.readlines()
+        for line in lines:
+            feedback = expert.parse_input(line.rstrip())
+    #
+    # while True:
+    #     data = input("> ")
+    #     feedback = expert.parse_input(data)
+    #     if not feedback:
+    #         print("Wrong command!")
+    #         break
     return 0
 
-class Expert(object):
 
+class Expert(object):
 
     def __init__(self):
         self.rootVars = OrderedDict() # { (key) variable : (value) [str, booleanValue, taughtBoolean] }
@@ -28,36 +33,37 @@ class Expert(object):
         self.whyExpr = OrderedDict()
 
     def parse_input(self, input):
-        if input.startwith("Teach"):
-            if input.endwith("/"""):
-                teach, varType, varName, equal, strValue = input.split()
+        if input.startswith("Teach"):
+            if input.endswith('\"'):
+                print(input.split())
+                _, varType, varName, _, strValue = input.split(maxsplit=4)
                 self.teach_variable(varType, varName, strValue)
-            elif input.endwith("false") or input.endwith("true"):
-                teach, var, equal, boolean = input.split()
-                self.define_variable(var, boolean.title())
+            elif input.lower().endswith("false") or input.lower().endswith("true"):
+                _, var, _, boolean = input.split(maxsplit=3)
+                self.define_variable(var, True if boolean.lower() == "true" else False)
             elif "->" in input:
-                teach, expression, arrow, value = input.split()
+                _, expression, _, value = input.split(maxsplit=3)
                 self.teach_rule(expression, value)
             return "Teach"
-        elif input.startwith("List"):
-            self.list_all()
+        elif input.startswith("List"):
+            print(self.list_all())
             return "List"
-        elif input.startwith("Learn"):
+        elif input.startswith("Learn"):
             self.learn_rules()
             return "Learn"
-        elif input.startwith("Query"):
-            q, query = input.split()
+        elif input.startswith("Query"):
+            _, query = input.split(maxsplit=1)
             self.query(query)
             return "Query"
-        elif input.startwith("Why"):
-            w, question = input.split()
+        elif input.startswith("Why"):
+            _, question = input.split(maxsplit=1)
             self.why(question)
             return "Why"
 
     def teach_variable(self, varType, varName, strValue):
-        if varType == 'R' and self.rootVars.get(varName) is None:
+        if varType == '-R' and self.rootVars.get(varName) is None:
             self.rootVars[varName] = [strValue, False, False]
-        if varType == 'S' and self.learnedVars.get(varName) is None:
+        if varType == '-L' and self.learnedVars.get(varName) is None:
             self.learnedVars[varName] = [strValue, False, False]
 
     def define_variable(self, varName, boolean):
@@ -97,10 +103,11 @@ class Expert(object):
                     self.learnedVars[3] = True
                 
     def query(self, expr):
-        return self.parse_expr(expr)
+        if self.all_valid(expr):
+            return self.parse_expr(expr)
 
     def why(self, question):
-
+        pass
 
     def all_valid(self, expr):
         variables = re.findall(r"[\w']+", expr)
