@@ -94,10 +94,10 @@ class Expert(object):
                     self.learnedVars[3] = True
                 
     def query(self, expr):
-        pass
+        return self.parse_expr(expr)
 
     def why(self, question):
-        pass
+
 
     def all_valid(self, expr):
         variables = re.findall(r"[\w']+", expr)
@@ -106,7 +106,7 @@ class Expert(object):
             result = result and (var in self.learnedVars or var in self.rootVars)
         return result
 
-    def parse_expr(self, expr, val):
+    def parse_expr(self, expr):
         variables = re.findall(r"[\w']+", expr)
         for v in variables:
             if self.rootVars.get(v):
