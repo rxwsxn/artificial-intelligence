@@ -10,6 +10,3 @@ Query V
 Query S
 Teach S = false
 List
-Teacn -L S = "smoky"
-Teacn -L F = "fire"
-Teacn -L SOS = "switch_on_sprinklers"
