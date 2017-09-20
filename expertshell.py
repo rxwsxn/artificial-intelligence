@@ -9,7 +9,7 @@ def main():
     """
     expert = Expert()
     print("Hello, Welcome to Our Expert System Shell!")
-    with open('test.txt') as f:
+    with open('test_slide.txt') as f:
         lines = f.readlines()
         for line in lines:
             feedback = expert.parse_input(line.rstrip())
@@ -17,9 +17,8 @@ def main():
     # while True:
     #     data = input("> ")
     #     feedback = expert.parse_input(data)
-    #     if not feedback:
-    #         print("Wrong command!")
-    #         break
+            if not feedback:
+                print("Wrong command:",line)
     return 0
 
 
@@ -54,7 +53,7 @@ class Expert(object):
             return "Learn"
         elif input.startswith("Query"):
             _, query = input.split(maxsplit=1)
-            print(self.query(query))
+            print("\nQuery: {}, value: {}".format(query, self.query(query)))
             return "Query"
         elif input.startswith("Why"):
             _, question = input.split(maxsplit=1)
@@ -71,51 +70,75 @@ class Expert(object):
         if self.rootVars.get(varName):
             if not self.rootVars[varName][1] == boolean:
                 for k, v in self.learnedVars.items():
-                    self.learnedVars[k] = [v[0], v[1], False]
-                    # remove from facts and falsehood
-                    if v[0] in self.facts:
-                        self.facts.remove(v[0])
-                    elif v[0] in self.falsehood:
-                        self.falsehood.remove(v[0])
+                    self.learnedVars[k] = [v[0], False, True]
+                    # remove from facts and add to falsehood
+                    if not k in self.falsehood:
+                        self.addFalsehood(k)
+
             self.rootVars[varName][1] = boolean
             if boolean:
-                self.facts.append(varName)
+                self.addFact(varName)
             else:
-                self.falsehood.append(varName)
-
+                self.addFalsehood(varName)
+        else:
+            print("\nCan not set value directly to a learned variable!")
+    def getString(self, var):
+        if var in self.rootVars:
+            return self.rootVars[var][0]
+        elif var in self.learnedVars:
+            return self.learnedVars[var][0]
+        else:
+            return "The string of var {} does not exist!".format(var)
+        
+    def addFact(self, var):
+        if var in self.falsehood:
+            self.falsehood.remove(var)
+        if not var in self.facts:
+            self.facts.append(var)
+    
+    def addFalsehood(self, var):
+        if var in self.facts:
+            self.facts.remove(var)
+        if not var in self.falsehood:
+            self.falsehood.append(var)
+        
     def teach_rule(self, expr, val):
         if self.all_valid(expr):
             self.rules[expr] = val
 
     def list_all(self):
-        rootVarsStr = 'Root Variables: \n'
+        rootVarsStr = '\nRoot Variables: \n'
         learnedVarsStr = '\nLearned Variables: \n'
         factsStr = '\nFacts: \n'
         rulesStr = '\nRules: \n'
+        falsehoodStr = '\nFalsehood: \n'
 
         for k, v in self.rootVars.items():
-            rootVarsStr += '\t {} = {}\n'.format(k, v[0])
+            rootVarsStr += '\t{} = {}\n'.format(k, v[0])
         for k, v in self.learnedVars.items():
-            learnedVarsStr += '\t {} = {}\n'.format(k, v[0])
+            learnedVarsStr += '\t{} = {}\n'.format(k, v[0])
         for k, v in self.rules.items():
-            rulesStr += '\t {} -> {}\n'.format(k, v)
+            rulesStr += '\t{} -> {}\n'.format(k, v)
         for v in self.facts:
-            factsStr += '\t {}\n'.format(v)
-        print(rootVarsStr + learnedVarsStr + factsStr + rulesStr)
+            factsStr += '\t{} = {}\n'.format(v, self.getString(v))
+        for v in self.falsehood:
+            falsehoodStr += '\t{} = {}\n'.format(v, self.getString(v))
+        print(rootVarsStr + learnedVarsStr + factsStr + falsehoodStr + rulesStr)
 
     def learn_rules(self):
         # worst case learning scenario, results in O(n^2) time
         # can have further optimizations
         for i in range(len(self.rules)):
-            for expr, var in self.rules:
+            for expr in self.rules:
+                var = self.rules[expr]
                 if not var in self.facts:
-                    self.learnedVars[var][2] = self.parse_expr(expr)
+                    self.learnedVars[var][1] = self.parse_expr(expr)
                     # add the var to facts or falsehood
                     if self.parse_expr(expr):
-                        self.facts.append(var)
+                        self.addFact(var)
                     else:
-                        self.falsehood.append(var)
-                    self.learnedVars[var][3] = True
+                        self.addFalsehood(var)
+                    self.learnedVars[var][2] = True
                     
                 
     def query(self, expr):
@@ -138,7 +161,7 @@ class Expert(object):
                 # backward chaining, find the rule -> this var
                 for key in self.rules:
                     if self.rules[key] == var:
-                        expr = expr.replace(var, str(self.query(self.rules[key])))
+                        expr = expr.replace(var, str(self.query(key)))
         return self.parse_expr(expr)
 
     def why(self, question):

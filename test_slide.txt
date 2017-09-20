@@ -1,0 +1,13 @@
+Teach -R A = "alarm_beeps"
+Teach A = true
+Teach -R H = "hot"
+Teach H = true
+Teach -L S = "smoky"
+Teach -L F = "fire"
+Teach -L SOS = "switch_on_sprinklers"
+Teach A -> S
+Teach H&S -> F
+Teach F -> SOS
+List
+Query SOS
+Query F
