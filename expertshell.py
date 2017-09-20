@@ -30,12 +30,13 @@ class Expert(object):
         self.learnedVars = OrderedDict() # { (key) variable : (value) [str, booleanValue, taughtBoolean] }
         self.rules = OrderedDict() # { (key) expression : (value) var }
         self.facts = [] # currently not used
+        self.falsehood = []
         self.whyExpr = OrderedDict()
 
     def parse_input(self, input):
         if input.startswith("Teach"):
             if input.endswith('\"'):
-                print(input.split())
+                # print(input.split())
                 _, varType, varName, _, strValue = input.split(maxsplit=4)
                 self.teach_variable(varType, varName, strValue)
             elif input.lower().endswith("false") or input.lower().endswith("true"):
@@ -53,7 +54,7 @@ class Expert(object):
             return "Learn"
         elif input.startswith("Query"):
             _, query = input.split(maxsplit=1)
-            self.query(query)
+            print(self.query(query))
             return "Query"
         elif input.startswith("Why"):
             _, question = input.split(maxsplit=1)
@@ -71,7 +72,16 @@ class Expert(object):
             if not self.rootVars[varName][1] == boolean:
                 for k, v in self.learnedVars.items():
                     self.learnedVars[k] = [v[0], v[1], False]
+                    # remove from facts and falsehood
+                    if v[0] in self.facts:
+                        self.facts.remove(v[0])
+                    elif v[0] in self.falsehood:
+                        self.falsehood.remove(v[0])
             self.rootVars[varName][1] = boolean
+            if boolean:
+                self.facts.append(varName)
+            else:
+                self.falsehood.append(varName)
 
     def teach_rule(self, expr, val):
         if self.all_valid(expr):
@@ -84,9 +94,9 @@ class Expert(object):
         rulesStr = '\nRules: \n'
 
         for k, v in self.rootVars.items():
-            rootVarsStr += '\t {} = "{}"\n'.format(k, v)
+            rootVarsStr += '\t {} = {}\n'.format(k, v[0])
         for k, v in self.learnedVars.items():
-            learnedVarsStr += '\t {} = "{}"\n'.format(k, v)
+            learnedVarsStr += '\t {} = {}\n'.format(k, v[0])
         for k, v in self.rules.items():
             rulesStr += '\t {} -> {}\n'.format(k, v)
         for v in self.facts:
@@ -99,14 +109,37 @@ class Expert(object):
         for i in range(len(self.rules)):
             for expr, var in self.rules:
                 if not var in self.facts:
-                    self.learnedVars[2] = self.parse_expr(expr)
-                    self.learnedVars[3] = True
+                    self.learnedVars[var][2] = self.parse_expr(expr)
+                    # add the var to facts or falsehood
+                    if self.parse_expr(expr):
+                        self.facts.append(var)
+                    else:
+                        self.falsehood.append(var)
+                    self.learnedVars[var][3] = True
+                    
                 
     def query(self, expr):
+        # base case
         if expr in self.facts:
             return True
-        if self.all_valid(expr):
-            print(self.parse_expr(expr))
+        elif expr in self.falsehood:
+            return False
+        # recursive case
+        # for all vars in expr, check if it's in facts, replaces with 'True', 
+        # if it's in falsehood, replace with 'False', 
+        # else recursive call
+        variables = re.findall(r"[\w']+", expr)
+        for var in variables:
+            if var in self.facts:
+                expr = expr.replace(var, 'True')
+            elif var in self.falsehood:
+                expr = expr.replace(var, 'False')
+            else:
+                # backward chaining, find the rule -> this var
+                for key in self.rules:
+                    if self.rules[key] == var:
+                        expr = expr.replace(var, str(self.query(self.rules[key])))
+        return self.parse_expr(expr)
 
     def why(self, question):
         factKnown = "I know that"
@@ -123,10 +156,10 @@ class Expert(object):
     def parse_expr(self, expr):
         variables = re.findall(r"[\w']+", expr)
         for v in variables:
-            if self.rootVars.get(v):
-                expr = expr.replace(v, 'True' if self.rootVars[v][1] else 'False')
-            elif self.learnedVars.get(v):
-                expr = expr.replace(v, 'True' if self.learnedVars[v][1] else 'False')
+            if v == "True" or v in self.facts:
+                expr = expr.replace(v, 'True')
+            else:
+                expr = expr.replace(v, 'False')
         expr = expr.replace('&', ' and ')
         expr = expr.replace('|', ' or ')
         expr = expr.replace('!', ' not ')
