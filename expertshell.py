@@ -9,17 +9,13 @@ def main():
     """
     expert = Expert()
     print("Hello, Welcome to Our Expert System Shell!")
-    with open('test_slide.txt') as f:
-        lines = f.readlines()
-        for line in lines:
-            feedback = expert.parse_input(line.rstrip())
-    #
-    # while True:
-    #     data = input("> ")
-    #     feedback = expert.parse_input(data)
-            if not feedback:
-                print("Wrong command:", line)
-
+    while True:
+        data = input("> ")
+        if data.lower() == 'q':
+            break
+        err = expert.parse_input(data)
+        if err:
+            print("Wrong command:", data)
 
 class Expert(object):
 
@@ -42,17 +38,17 @@ class Expert(object):
             elif "->" in input:
                 _, expression, _, value = input.split(maxsplit=3)
                 self.teach_rule(expression, value)
-            return "Teach"
+            return 0
         elif input.startswith("List"):
             self.list_all()
-            return "List"
+            return 0
         elif input.startswith("Learn"):
             self.learn_rules()
-            return "Learn"
+            return 0
         elif input.startswith("Query"):
             _, query = input.split(maxsplit=1)
             print("{} is {}\n".format(query, self.query(query)))
-            return "Query"
+            return 0
         elif input.startswith("Why"):
             _, query = input.split(maxsplit=1)
             boolean, reason = self.why(query, '')
@@ -60,7 +56,9 @@ class Expert(object):
                 print("{} is {}\n{}Thus I know that {}.\n".format(query, boolean, reason, self.translate_logic(query)))
             else:
                 print("{} is {}\n{}Thus I cannot prove that {}.\n".format(query, boolean, reason, self.translate_logic(query)))
-            return "Why"
+            return 0
+        else:
+            return 1
 
     def teach_variable(self, varType, varName, strValue):
         if varType == '-R' and self.rootVars.get(varName) is None:
@@ -166,20 +164,15 @@ class Expert(object):
             elif var in self.falsehood:
                 reason += "I know it's not true that {}. ".format(self.getString(var))
                 expr = expr.replace(var, 'False')
-            elif var in self.rules.keys():
-                if var in self.learnedVars.keys():
-                    if self.learnedVars[var][1]:
-                        reason += "I know it's true that {}. ".format(self.getString(var))
-                    else:
-                        reason += "I know it's not true that {}. ".format(self.getString(var))
-                    expr = expr.replace(var, str(self.learnedVars[var][1]))
             else:
                 # backward chaining, find the rule -> this var
                 for key in self.rules:
                     if self.rules[key] == var:
                         expr = expr.replace(var, str(self.why(key, reason)[0]))
-                        if self.getString(key) is not None:
+                        if self.getString(key):
                             reason += "Because it's true that {}, I know that {}. ".format(self.getString(key), self.getString(var))
+                        else:
+                            reason += "Because it's true that {}, I know that {}. ".format(self.translate_logic(key), self.getString(var))
         return self.parse_expr(expr), reason
 
     def all_valid(self, expr):
