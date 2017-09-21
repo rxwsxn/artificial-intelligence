@@ -11,4 +11,7 @@ Teach F -> SOS
 List
 Query SOS&!A
 Query F
-Why H&S
+Why SOS&!A&(F|S)
+Why SOS&(!A&F)|S
+Why A&S
+Why F

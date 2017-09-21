@@ -18,8 +18,7 @@ def main():
     #     data = input("> ")
     #     feedback = expert.parse_input(data)
             if not feedback:
-                print("Wrong command:",line)
-    return 0
+                print("Wrong command:", line)
 
 
 class Expert(object):
@@ -57,7 +56,10 @@ class Expert(object):
         elif input.startswith("Why"):
             _, query = input.split(maxsplit=1)
             boolean, reason = self.why(query, '')
-            print("{} is {}. {}\n".format(query, boolean, reason))
+            if boolean:
+                print("{} is {}\n{}Thus I know that {}.\n".format(query, boolean, reason, self.translate_logic(query)))
+            else:
+                print("{} is {}\n{}Thus I cannot prove that {}.\n".format(query, boolean, reason, self.translate_logic(query)))
             return "Why"
 
     def teach_variable(self, varType, varName, strValue):
@@ -72,13 +74,13 @@ class Expert(object):
                 for k, v in self.learnedVars.items():
                     self.learnedVars[k] = [v[0], False, True]
                     # remove from facts and add to falsehood
-                    if not k in self.falsehood:
+                    if k not in self.falsehood:
                         self.addFalsehood(k)
 
             self.rootVars[varName][1] = boolean
             if boolean:
                 self.addFact(varName)
-            else:
+            if not boolean:
                 self.addFalsehood(varName)
         else:
             print("\nCan not set value directly to a learned variable!")
@@ -147,12 +149,10 @@ class Expert(object):
     def why(self, expr, reason):
         # base case
         if expr in self.facts:
-            print("is fact")
-            reason += "I know that {}. ".format(self.getString(expr))
+            reason += "I know it's true that {}. ".format(self.getString(expr))
             return True, reason
         elif expr in self.falsehood:
-            print("is not fact")
-            reason += "I know it's false that {}. ".format(self.getString(expr))
+            reason += "I know it's not true that {}. ".format(self.getString(expr))
             return False, reason
         # recursive case
         # for all vars in expr, check if it's in facts, replaces with 'True',
@@ -166,14 +166,20 @@ class Expert(object):
             elif var in self.falsehood:
                 reason += "I know it's not true that {}. ".format(self.getString(var))
                 expr = expr.replace(var, 'False')
+            elif var in self.rules.keys():
+                if var in self.learnedVars.keys():
+                    if self.learnedVars[var][1]:
+                        reason += "I learned it's true that {}. ".format(self.getString(var))
+                    else:
+                        reason += "I learned it's not true that {}. ".format(self.getString(var))
+                    expr = expr.replace(var, str(self.learnedVars[var][1]))
             else:
                 # backward chaining, find the rule -> this var
                 for key in self.rules:
                     if self.rules[key] == var:
-                        print('here', key)
                         expr = expr.replace(var, str(self.why(key, reason)[0]))
                         if self.getString(key) is not None:
-                            reason += "Because it's true that {}, ".format(self.getString(key))
+                            reason += "Because it's true that {}, I know that {}. ".format(self.getString(key), self.getString(var))
         return self.parse_expr(expr), reason
 
     def all_valid(self, expr):
@@ -184,6 +190,10 @@ class Expert(object):
         return result
 
     def parse_expr(self, expr):
+        """
+        :param expr:
+        :return: Boolean
+        """
         variables = re.findall(r"[\w']+", expr)
         for v in variables:
             if v == 'True' or v in self.facts:
@@ -195,6 +205,21 @@ class Expert(object):
         expr = expr.replace('!', ' not ')
         return eval(expr)
 
+    def translate_logic(self, expr):
+        """
+        :param expr: Translate expression to words in conclusion of why
+        :return: str
+        """
+        variables = re.findall(r"[\w']+", expr)
+        for v in variables:
+            if self.rootVars.get(v):
+                expr = expr.replace(v, self.rootVars[v][0])
+            elif self.learnedVars.get(v):
+                expr = expr.replace(v, self.learnedVars[v][0])
+        expr = expr.replace('&', ' and ')
+        expr = expr.replace('|', ' or ')
+        expr = expr.replace('!', 'not ')
+        return expr
 
 if __name__ == '__main__':
     main()
