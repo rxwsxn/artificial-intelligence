@@ -169,9 +169,9 @@ class Expert(object):
             elif var in self.rules.keys():
                 if var in self.learnedVars.keys():
                     if self.learnedVars[var][1]:
-                        reason += "I learned it's true that {}. ".format(self.getString(var))
+                        reason += "I know it's true that {}. ".format(self.getString(var))
                     else:
-                        reason += "I learned it's not true that {}. ".format(self.getString(var))
+                        reason += "I know it's not true that {}. ".format(self.getString(var))
                     expr = expr.replace(var, str(self.learnedVars[var][1]))
             else:
                 # backward chaining, find the rule -> this var
