@@ -9,7 +9,7 @@ def main():
     """
     expert = Expert()
     print("Hello, Welcome to Our Expert System Shell!")
-    with open('test_slide.txt') as f:
+    with open('test_circle.txt') as f:
         lines = f.readlines()
         for line in lines:
             feedback = expert.parse_input(line.rstrip())
