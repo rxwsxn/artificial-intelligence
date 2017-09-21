@@ -35,7 +35,6 @@ class Expert(object):
     def parse_input(self, input):
         if input.startswith("Teach"):
             if input.endswith('\"'):
-                # print(input.split())
                 _, varType, varName, _, strValue = input.split(maxsplit=4)
                 self.teach_variable(varType, varName, strValue)
             elif input.lower().endswith("false") or input.lower().endswith("true"):
@@ -53,11 +52,12 @@ class Expert(object):
             return "Learn"
         elif input.startswith("Query"):
             _, query = input.split(maxsplit=1)
-            print("\nQuery: {}, value: {}".format(query, self.query(query)))
+            print("{} is {}\n".format(query, self.query(query)))
             return "Query"
         elif input.startswith("Why"):
-            _, question = input.split(maxsplit=1)
-            self.why(question)
+            _, query = input.split(maxsplit=1)
+            boolean, reason = self.why(query, '')
+            print("{} is {}. {}\n".format(query, boolean, reason))
             return "Why"
 
     def teach_variable(self, varType, varName, strValue):
@@ -88,7 +88,7 @@ class Expert(object):
         elif var in self.learnedVars:
             return self.learnedVars[var][0]
         else:
-            return "The string of var {} does not exist!".format(var)
+            return None
         
     def addFact(self, var):
         if var in self.falsehood:
@@ -142,32 +142,39 @@ class Expert(object):
                     
                 
     def query(self, expr):
+        return self.why(expr, '')[0]
+
+    def why(self, expr, reason):
         # base case
         if expr in self.facts:
-            return True
+            print("is fact")
+            reason += "I know that {}. ".format(self.getString(expr))
+            return True, reason
         elif expr in self.falsehood:
-            return False
+            print("is not fact")
+            reason += "I know it's false that {}. ".format(self.getString(expr))
+            return False, reason
         # recursive case
-        # for all vars in expr, check if it's in facts, replaces with 'True', 
-        # if it's in falsehood, replace with 'False', 
+        # for all vars in expr, check if it's in facts, replaces with 'True',
+        # if it's in falsehood, replace with 'False',
         # else recursive call
         variables = re.findall(r"[\w']+", expr)
         for var in variables:
             if var in self.facts:
+                reason += "I know it's true that {}. ".format(self.getString(var))
                 expr = expr.replace(var, 'True')
             elif var in self.falsehood:
+                reason += "I know it's not true that {}. ".format(self.getString(var))
                 expr = expr.replace(var, 'False')
             else:
                 # backward chaining, find the rule -> this var
                 for key in self.rules:
                     if self.rules[key] == var:
-                        expr = expr.replace(var, str(self.query(key)))
-        return self.parse_expr(expr)
-
-    def why(self, question):
-        factKnown = "I know that"
-        ruleApplied = "Because "
-        conclusion = "Thus I know that "
+                        print('here', key)
+                        expr = expr.replace(var, str(self.why(key, reason)[0]))
+                        if self.getString(key) is not None:
+                            reason += "Because it's true that {}, ".format(self.getString(key))
+        return self.parse_expr(expr), reason
 
     def all_valid(self, expr):
         variables = re.findall(r"[\w']+", expr)
@@ -179,7 +186,7 @@ class Expert(object):
     def parse_expr(self, expr):
         variables = re.findall(r"[\w']+", expr)
         for v in variables:
-            if v == "True" or v in self.facts:
+            if v == 'True' or v in self.facts:
                 expr = expr.replace(v, 'True')
             else:
                 expr = expr.replace(v, 'False')
