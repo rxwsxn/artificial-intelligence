@@ -1,13 +1,18 @@
-Teach -R A = "alarm_beeps"
+Teach -R A = "the alarm beeps"
 Teach A = true
-Teach -R H = "hot"
+Teach -R H = "it's hot"
 Teach H = true
-Teach -L S = "smoky"
-Teach -L F = "fire"
-Teach -L SOS = "switch_on_sprinklers"
+Teach -L S = "there is smoke"
+Teach -L F = "there is a fire"
+Teach -L SOS = "the sprinkler turns on"
 Teach A -> S
 Teach H&S -> F
 Teach F -> SOS
 List
-Query SOS
+Query SOS&!A
+Query F
+Why SOS&!A&(F|S)
+Why SOS&(!A&F)|S
+Why A&S
+Why F
 Query F

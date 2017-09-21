@@ -9,7 +9,7 @@ def main():
     """
     expert = Expert()
     print("Hello, Welcome to Our Expert System Shell!")
-    with open('test_circle.txt') as f:
+    with open('test_slide.txt') as f:
         lines = f.readlines()
         for line in lines:
             feedback = expert.parse_input(line.rstrip())
@@ -18,8 +18,7 @@ def main():
     #     data = input("> ")
     #     feedback = expert.parse_input(data)
             if not feedback:
-                print("Wrong command:",line)
-    return 0
+                print("Wrong command:", line)
 
 
 class Expert(object):
@@ -53,11 +52,16 @@ class Expert(object):
             return "Learn"
         elif input.startswith("Query"):
             _, query = input.split(maxsplit=1)
-            print("\nQuery: {}, value: {}".format(query, self.query(query)))
+            # print("\nQuery: {}, value: {}".format(query, self.query(query)))
+            print("{} is {}\n".format(query, self.query(query)))
             return "Query"
         elif input.startswith("Why"):
-            _, question = input.split(maxsplit=1)
-            self.why(question)
+            _, query = input.split(maxsplit=1)
+            boolean, reason = self.why(query, '')
+            if boolean:
+                print("{} is {}\n{}Thus I know that {}.\n".format(query, boolean, reason, self.translate_logic(query)))
+            else:
+                print("{} is {}\n{}Thus I cannot prove that {}.\n".format(query, boolean, reason, self.translate_logic(query)))
             return "Why"
 
     def teach_variable(self, varType, varName, strValue):
@@ -72,13 +76,13 @@ class Expert(object):
                 for k, v in self.learnedVars.items():
                     self.learnedVars[k] = [v[0], False, True]
                     # remove from facts and add to falsehood
-                    if not k in self.falsehood:
+                    if k not in self.falsehood:
                         self.addFalsehood(k)
 
             self.rootVars[varName][1] = boolean
             if boolean:
                 self.addFact(varName)
-            else:
+            if not boolean:
                 self.addFalsehood(varName)
         else:
             print("\nCan not set value directly to a learned variable!")
@@ -88,7 +92,7 @@ class Expert(object):
         elif var in self.learnedVars:
             return self.learnedVars[var][0]
         else:
-            return "The string of var {} does not exist!".format(var)
+            return None
         
     def addFact(self, var):
         if var in self.falsehood:
@@ -142,32 +146,43 @@ class Expert(object):
                     
                 
     def query(self, expr):
+        return self.why(expr, '')[0]
+
+    def why(self, expr, reason):
         # base case
         if expr in self.facts:
-            return True
+            reason += "I know it's true that {}. ".format(self.getString(expr))
+            return True, reason
         elif expr in self.falsehood:
-            return False
+            reason += "I know it's not true that {}. ".format(self.getString(expr))
+            return False, reason
         # recursive case
-        # for all vars in expr, check if it's in facts, replaces with 'True', 
-        # if it's in falsehood, replace with 'False', 
+        # for all vars in expr, check if it's in facts, replaces with 'True',
+        # if it's in falsehood, replace with 'False',
         # else recursive call
         variables = re.findall(r"[\w']+", expr)
         for var in variables:
             if var in self.facts:
+                reason += "I know it's true that {}. ".format(self.getString(var))
                 expr = expr.replace(var, 'True')
             elif var in self.falsehood:
+                reason += "I know it's not true that {}. ".format(self.getString(var))
                 expr = expr.replace(var, 'False')
+            elif var in self.rules.keys():
+                if var in self.learnedVars.keys():
+                    if self.learnedVars[var][1]:
+                        reason += "I know it's true that {}. ".format(self.getString(var))
+                    else:
+                        reason += "I know it's not true that {}. ".format(self.getString(var))
+                    expr = expr.replace(var, str(self.learnedVars[var][1]))
             else:
                 # backward chaining, find the rule -> this var
                 for key in self.rules:
                     if self.rules[key] == var:
-                        expr = expr.replace(var, str(self.query(key)))
-        return self.parse_expr(expr)
-
-    def why(self, question):
-        factKnown = "I know that"
-        ruleApplied = "Because "
-        conclusion = "Thus I know that "
+                        expr = expr.replace(var, str(self.why(key, reason)[0]))
+                        if self.getString(key) is not None:
+                            reason += "Because it's true that {}, I know that {}. ".format(self.getString(key), self.getString(var))
+        return self.parse_expr(expr), reason
 
     def all_valid(self, expr):
         variables = re.findall(r"[\w']+", expr)
@@ -177,9 +192,13 @@ class Expert(object):
         return result
 
     def parse_expr(self, expr):
+        """
+        :param expr:
+        :return: Boolean
+        """
         variables = re.findall(r"[\w']+", expr)
         for v in variables:
-            if v == "True" or v in self.facts:
+            if v == 'True' or v in self.facts:
                 expr = expr.replace(v, 'True')
             else:
                 expr = expr.replace(v, 'False')
@@ -188,6 +207,21 @@ class Expert(object):
         expr = expr.replace('!', ' not ')
         return eval(expr)
 
+    def translate_logic(self, expr):
+        """
+        :param expr: Translate expression to words in conclusion of why
+        :return: str
+        """
+        variables = re.findall(r"[\w']+", expr)
+        for v in variables:
+            if self.rootVars.get(v):
+                expr = expr.replace(v, self.rootVars[v][0])
+            elif self.learnedVars.get(v):
+                expr = expr.replace(v, self.learnedVars[v][0])
+        expr = expr.replace('&', ' and ')
+        expr = expr.replace('|', ' or ')
+        expr = expr.replace('!', 'not ')
+        return expr
 
 if __name__ == '__main__':
     main()
