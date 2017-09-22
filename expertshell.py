@@ -1,4 +1,5 @@
 # CS 4710
+# Bryan Chen and Kefan Zhang
 from collections import OrderedDict
 import re
 
@@ -22,7 +23,7 @@ class Expert(object):
     def __init__(self):
         self.rootVars = OrderedDict() # { (key) variable : (value) [str, booleanValue, taughtBoolean] }
         self.learnedVars = OrderedDict() # { (key) variable : (value) [str, booleanValue, taughtBoolean] }
-        self.rules = OrderedDict() # { (key) expression : (value) var }
+        self.rules = OrderedDict() # { (key) expression : (value) [var, var, var]}
         self.facts = [] # currently not used
         self.falsehood = []
         self.whyExpr = OrderedDict()
@@ -104,7 +105,10 @@ class Expert(object):
         
     def teach_rule(self, expr, val):
         if self.all_valid(expr):
-            self.rules[expr] = val
+            if self.rules.get(expr):
+                self.rules[expr] += [val]
+            else:
+                self.rules[expr] = [val]
 
     def list_all(self):
         rootVarsStr = '\nRoot Variables: \n'
@@ -113,34 +117,35 @@ class Expert(object):
         rulesStr = '\nRules: \n'
         falsehoodStr = '\nFalsehood: \n'
 
-        for k, v in self.rootVars.items():
-            rootVarsStr += '\t{} = {}\n'.format(k, v[0])
-        for k, v in self.learnedVars.items():
-            learnedVarsStr += '\t{} = {}\n'.format(k, v[0])
-        for k, v in self.rules.items():
-            rulesStr += '\t{} -> {}\n'.format(k, v)
-        for v in self.facts:
-            factsStr += '\t{} = {}\n'.format(v, self.getString(v))
-        for v in self.falsehood:
-            falsehoodStr += '\t{} = {}\n'.format(v, self.getString(v))
+        for k, value in self.rootVars.items():
+            rootVarsStr += '\t{} = {}\n'.format(k, value[0])
+        for k, value in self.learnedVars.items():
+            learnedVarsStr += '\t{} = {}\n'.format(k, value[0])
+        for k, value in self.rules.items():
+            if len(value) >= 1:
+                for var in value:
+                    rulesStr += '\t{} -> {}\n'.format(k, var)
+        for value in self.facts:
+            factsStr += '\t{} = {}\n'.format(value, self.getString(value))
+        for value in self.falsehood:
+            falsehoodStr += '\t{} = {}\n'.format(value, self.getString(value))
         print(rootVarsStr + learnedVarsStr + factsStr + falsehoodStr + rulesStr)
 
     def learn_rules(self):
         # worst case learning scenario, results in O(n^2) time
         # can have further optimizations
         for i in range(len(self.rules)):
-            for expr in self.rules:
-                var = self.rules[expr]
-                if not var in self.facts:
-                    self.learnedVars[var][1] = self.parse_expr(expr)
-                    # add the var to facts or falsehood
-                    if self.parse_expr(expr):
-                        self.addFact(var)
-                    else:
-                        self.addFalsehood(var)
-                    self.learnedVars[var][2] = True
-                    
-                
+            for expr, variables in self.rules.items():
+                for var in variables:
+                    if var not in self.facts:
+                        self.learnedVars[var][1] = self.parse_expr(expr)
+                        # add the var to facts or falsehood
+                        if self.parse_expr(expr):
+                            self.addFact(var)
+                        else:
+                            self.addFalsehood(var)
+                        self.learnedVars[var][2] = True
+
     def query(self, expr):
         return self.why(expr, '')[0]
 
@@ -167,7 +172,7 @@ class Expert(object):
             else:
                 # backward chaining, find the rule -> this var
                 for key in self.rules:
-                    if self.rules[key] == var:
+                    if var in self.rules[key]:
                         expr = expr.replace(var, str(self.why(key, reason)[0]))
                         if self.getString(key):
                             reason += "Because it's true that {}, I know that {}. ".format(self.getString(key), self.getString(var))
