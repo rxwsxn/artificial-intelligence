@@ -1,0 +1,11 @@
+Teach -R A = "A"
+Teach -R B = "B"
+Teach -L C = "C"
+Teach A = true
+Teach A -> B
+Teach A -> C
+List
+Query B
+Why B
+Why C
+Learn
