@@ -9,11 +9,11 @@ def main():
     :return:
     """
     expert = Expert()
-    print("Hello, Welcome to Our Expert System Shell!")
+    print("Hello, Welcome to Our Expert System Shell! Type 'quit' to quit")
     while True:
         data = input("> ")
-        if data.lower() == 'q':
-            break
+        if data.lower() == 'quit':
+            return 0
         err = expert.parse_input(data)
         if err:
             print("Wrong command:", data)
