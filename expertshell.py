@@ -71,12 +71,10 @@ class Expert(object):
 
     def define_variable(self, varName, boolean):
         if self.rootVars.get(varName):
-            print(self.rootVars[varName][2])
             if not self.rootVars[varName][1] == boolean and self.rootVars[varName][2]:
-                print("hello")
+                # only reset all learned variables if root var has already been taught, add learned var to falsehood
                 for k, v in self.learnedVars.items():
                     self.learnedVars[k] = [v[0], False, True]
-                    # remove from facts and add to falsehood
                     if k not in self.falsehood:
                         self.addFalsehood(k)
             self.rootVars[varName][1] = boolean
@@ -182,9 +180,13 @@ class Expert(object):
                     if var in self.rules[key]:
                         expr = expr.replace(var, str(self.why(key, reason)[0]))
                         if self.getString(key):
-                            reason += "Because it's true that {}, I know that {}. ".format(self.getString(key), self.getString(var))
+                            reason += "Because I know it's {}true that {}, {} {}. "\
+                                .format('not ' if not self.parse_expr(key) else '', self.getString(key),
+                                        'I know that' if self.parse_expr(var) else 'I am not sure if', self.getString(var))
                         else:
-                            reason += "Because it's true that {}, I know that {}. ".format(self.translate_logic(key), self.getString(var))
+                            reason += "Because I know it's {}true that {}, {} {}. "\
+                                .format('not ' if self.parse_expr(key) else '', self.translate_logic(key),
+                                        'I know that' if self.parse_expr(var) else 'I am not sure if', self.getString(var))
         return self.parse_expr(expr), reason
 
     def all_valid(self, expr):
