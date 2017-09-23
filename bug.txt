@@ -1,5 +1,5 @@
 Teach -R A = "A"
-Teach -R B = "B"
+Teach -L B = "B"
 Teach -L C = "C"
 Teach A = true
 Teach A -> B

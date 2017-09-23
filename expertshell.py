@@ -107,10 +107,13 @@ class Expert(object):
         
     def teach_rule(self, expr, val):
         if self.all_valid(expr):
-            if self.rules.get(expr):
+            if self.rules.get(expr) and not val in self.rules[expr]:
                 self.rules[expr] += [val]
+            elif self.rules.get(expr):
+                pass
             else:
                 self.rules[expr] = [val]
+
 
     def list_all(self):
         rootVarsStr = '\nRoot Variables: \n'
