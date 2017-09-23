@@ -180,13 +180,13 @@ class Expert(object):
                     if var in self.rules[key]:
                         expr = expr.replace(var, str(self.why(key, reason)[0]))
                         if self.getString(key):
-                            reason += "Because I know it's {}true that {}, {} {}. "\
+                            reason += "Because I know it's {}true that {}, I know it's {}true that {}. "\
                                 .format('not ' if not self.parse_expr(key) else '', self.getString(key),
-                                        'I know that' if self.parse_expr(var) else 'I am not sure if', self.getString(var))
+                                        'not ' if not self.parse_expr(var) else '', self.getString(var))
                         else:
-                            reason += "Because I know it's {}true that {}, {} {}. "\
-                                .format('not ' if self.parse_expr(key) else '', self.translate_logic(key),
-                                        'I know that' if self.parse_expr(var) else 'I am not sure if', self.getString(var))
+                            reason += "Because I know it's {}true that {}, I know it's {}true that {}. "\
+                                .format('not ' if not self.parse_expr(key) else '', self.translate_logic(key),
+                                        'not ' if not self.parse_expr(var) else '', self.getString(var))
         return self.parse_expr(expr), reason
 
     def all_valid(self, expr):
