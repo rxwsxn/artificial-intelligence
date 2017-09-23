@@ -4,6 +4,7 @@ Teach -L C = "C"
 Teach A = true
 Teach A -> B
 Teach A -> C
+Teach A -> C
 List
 Query B
 Why B

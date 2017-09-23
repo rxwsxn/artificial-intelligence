@@ -71,14 +71,16 @@ class Expert(object):
 
     def define_variable(self, varName, boolean):
         if self.rootVars.get(varName):
-            if not self.rootVars[varName][1] == boolean:
+            print(self.rootVars[varName][2])
+            if not self.rootVars[varName][1] == boolean and self.rootVars[varName][2]:
+                print("hello")
                 for k, v in self.learnedVars.items():
                     self.learnedVars[k] = [v[0], False, True]
                     # remove from facts and add to falsehood
                     if k not in self.falsehood:
                         self.addFalsehood(k)
-
             self.rootVars[varName][1] = boolean
+            self.rootVars[varName][2] = True
             if boolean:
                 self.addFact(varName)
             if not boolean:
@@ -107,7 +109,7 @@ class Expert(object):
         
     def teach_rule(self, expr, val):
         if self.all_valid(expr):
-            if self.rules.get(expr) and not val in self.rules[expr]:
+            if self.rules.get(expr) and val not in self.rules[expr]:
                 self.rules[expr] += [val]
             elif self.rules.get(expr):
                 pass
