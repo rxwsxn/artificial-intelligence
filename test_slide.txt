@@ -1,7 +1,7 @@
 Teach -R A = "the alarm beeps"
 Teach A = true
 Teach -R H = "it's hot"
-Teach H = true
+Teach H = false
 Teach -L S = "there is smoke"
 Teach -L F = "there is a fire"
 Teach -L SOS = "the sprinkler turns on"
@@ -10,7 +10,8 @@ Teach A -> SOS&F
 Teach H&(S|A) -> F
 Teach F -> SOS
 List
-Query SOS&!A
+Learn
+Query H&(S|A)
 Query F
 Why !A&F|(S&SOS)
 Why SOS&(!A&F)|S

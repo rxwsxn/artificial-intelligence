@@ -142,12 +142,12 @@ class Expert(object):
         for i in range(len(self.rules)):
             for expr, variables in self.rules.items():
                 for var in variables:
-                    if var not in self.facts:
+                    if self.learnedVars.get(var):
                         self.learnedVars[var][1] = self.parse_expr(expr)
                         # add the var to facts or falsehood
-                        if self.parse_expr(expr):
+                        if self.parse_expr(expr) and var not in self.facts:
                             self.addFact(var)
-                        else:
+                        elif not self.parse_expr(expr) and var not in self.falsehood:
                             self.addFalsehood(var)
                         self.learnedVars[var][2] = True
 
