@@ -3,6 +3,7 @@
 from collections import OrderedDict
 import re
 
+
 def main():
     """
     Main
@@ -17,6 +18,7 @@ def main():
         err = expert.parse_input(data)
         if err:
             print("Wrong command:", data)
+
 
 class Expert(object):
 
@@ -85,6 +87,7 @@ class Expert(object):
                 self.addFalsehood(varName)
         else:
             print("\nCan not set value directly to a learned variable!")
+
     def getString(self, var):
         if var in self.rootVars:
             return self.rootVars[var][0]
@@ -113,7 +116,6 @@ class Expert(object):
                 pass
             else:
                 self.rules[expr] = [val]
-
 
     def list_all(self):
         rootVarsStr = '\nRoot Variables: \n'
