@@ -34,8 +34,8 @@ public class RobotTraveler extends Robot {
         long estimatedTime = System.nanoTime() - startTime;
         System.out.println("Time it took to generate path: " + Math.pow(10, -9) * estimatedTime + " s");
         if (!path.isEmpty()) {
-            for (Point node : path) {
-                super.move(node);
+            for (int i = 1; i < path.size(); i++) {
+                super.move(path.get(i));
             }
         } else {
             System.out.println("You were either at the destination already or there wasn't a valid path to get there!");
@@ -52,9 +52,8 @@ public class RobotTraveler extends Robot {
         super.addToWorld(world);
     }
 
-    // Modified Manhattan distance allowing for diagonal, where the cost of moving diagonally is slightly greater than moving straight, but is not Euclidean in cost,
-    // not Chebyshev distance, or pure, unmodified Manhattan distance.
-    // http://theory.stanford.edu/~amitp/GameProgramming/Heuristics.html
+    // Modified Manhattan distance allowing for diagonal, where the cost of moving diagonally is slightly greater than moving
+    // straight, but is not Euclidean in cost and not Chebyshev distance or pure, unmodified Manhattan distance.
     public Double heuristic(Point p, Point d) {
         double dx = Math.abs(p.getX() - d.getX());
         double dy = Math.abs(p.getY() - d.getY());
@@ -63,10 +62,12 @@ public class RobotTraveler extends Robot {
             int numPings = (int) Math.pow(Math.max(cols, rows), 2);
             for (int i = 0; i < numPings; i++) {
                 String current = super.pingMap(d);
-                if (current.equals("X")) numOfX++;
+                if (current.equals("X")) {
+                    numOfX++;
+                }
                 if (numOfX > numPings / 2) {
                     walls.add(d);
-                    return 10000.0;
+                    return 9999.9;
                 }
             }
             nonWalls.add(d);
@@ -74,7 +75,7 @@ public class RobotTraveler extends Robot {
         return dx + dy + (-0.6) * Math.min(dx, dy);
     }
 
-    //Generate adjacent points--- Doesn't remove walls, but does remove nulls.
+    //Generate adjacent points, does not remove walls, but does remove nulls.
     public List<Point> generateAdjacents(Point current) {
         Point nw = new Point((int) current.getX() - 1, (int) current.getY() - 1);
         Point ne = new Point((int) current.getX() - 1, (int) current.getY() + 1);
@@ -88,13 +89,12 @@ public class RobotTraveler extends Robot {
         Collections.addAll(adj, nw, ne, n, w, sw, s, se, e);
 
         // Remove the nodes that return null upon pinging--- Those are outside the boundaries of the map.
-        adj.removeIf((Point p) -> p.getX() >= rows || p.getX() < 0 || p.getY() >= cols || p.getY() < 0);
+        adj.removeIf((Point p) -> p.getX() >= rows || p.getX() < 0 || p.getY() >= cols || p.getY() < 0 || evaluated.contains(p));
         return adj;
     }
 
 
-    //Take a Map of Point to Point (which theoretically would include all the mappings of node to node for correct path)
-    // and construct a list from that Map up until the passed in current point.
+    // Include all the mappings of node to node for correct path and construct a list from that Map up until the passed in current point.
     public List<Point> reconstructPath(Map<Point, Point> cameFrom, Point current) {
         List<Point> totalPath = new ArrayList<Point>();
         totalPath.add(current);
@@ -106,10 +106,6 @@ public class RobotTraveler extends Robot {
         return totalPath;
     }
 
-    //Adapted from Stackoverflow:
-    //http://stackoverflow.com/questions/1383797/java-hashmap-how-to-get-key-from-value/28415495#28415495
-    // Look in a map and find a Point based on the Double value. In this case, that means we look through fScore table for a certain fScore
-    // and find the point associated.
     public Point getPointFromFScore(double score) {
         return fScores.keySet().stream()
                 .filter(p -> fScores.get(p).equals(score) && !evaluated.contains(p))
@@ -126,14 +122,14 @@ public class RobotTraveler extends Robot {
         gScores.put(neighbor, gScore);
         double hScore = gScores.get(neighbor) + heuristic(neighbor, go);
 
-        //Tiebreaking. This reduces this current path's fScore, because it's the most efficient thus far.
+        // This reduces this current path's fScore for tiebreaking, because it's the most efficient thus far.
         while (fScores.values().contains(hScore)) {
             hScore *= 0.999;
         }
         fScores.put(neighbor, hScore);
     }
 
-    //Based on pseudocode from https://en.wikipedia.org/wiki/A*_search_algorithm
+    //Pseudocode from https://en.wikipedia.org/wiki/A*_search_algorithm
     public List<Point> aStar(Point st, Point go) {
 
         //Lists of evaluated and not evaluated Points (which are the nodes in this case)
@@ -198,10 +194,6 @@ public class RobotTraveler extends Robot {
             //Now, for each adjacent node to the current, evaluate the fScores and gScores.
             double gScore;
             for (Point neighbor : adj) {
-                if (evaluated.contains(neighbor)) {
-                    continue;
-                }
-
                 gScore = gScores.get(current) + heuristic(current, neighbor);
 
                 if (!notEvaluated.contains(neighbor)) {
