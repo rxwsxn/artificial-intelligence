@@ -14,12 +14,11 @@ class ValueItr(object):
                 self.S.append((i, j))
 
     def __maximize(self, s, wind_case):
-        i, j = s
         A = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 0), (0, 1), (1, -1), (1, 0), (1, 1)]
         maximum = -100000
         for a in A:
             s_p = (a[0] + s[0], a[1] + s[1])
-            if 1 <= wind_case <= 3 and s_p[1] in range(3, 6):
+            if 1 <= wind_case <= 3 and s[1] in range(3, 6):
                 s_p = (s_p[0] - wind_case + 1, s_p[1])
             if s_p[0] > 6:
                 s_p = (6, s_p[1])
@@ -31,6 +30,7 @@ class ValueItr(object):
                 s_p = (s_p[0], 0)
             pr = self.U[s_p]
             maximum = max(maximum, pr)
+
         return maximum
 
     def __reward(self, s):
