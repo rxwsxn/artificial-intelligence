@@ -65,9 +65,10 @@ class ValueItr(object):
                 self.U_p[s] = self.__reward(s) + discount * self.__maximize(s, wind_case=wind_case)
                 if abs(self.U_p[s] - self.U[s]) > d:
                     d = abs(self.U_p[s] - self.U[s])
-                    if d < e * (1 - discount) / discount:
+                    if d < 0.001:
                         break
         self.__print_U()
+        print "iters:", iters
 
 
 if __name__ == '__main__':
@@ -75,6 +76,6 @@ if __name__ == '__main__':
     e = 0.001
     y = 1
     v = ValueItr()
-    v.value_iteration(max_iters=MAX_ITERS, discount=y, e=e, wind_case=1)
-    v.value_iteration(max_iters=MAX_ITERS, discount=y, e=e, wind_case=2)
-    v.value_iteration(max_iters=MAX_ITERS, discount=y, e=e, wind_case=3)
+    for i in range (1,4):
+        print "wind case", i
+        v.value_iteration(max_iters=MAX_ITERS, discount=y, e=e, wind_case=i)
