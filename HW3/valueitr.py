@@ -68,7 +68,6 @@ class ValueItr(object):
                     if d < 0.001:
                         break
         self.__print_U()
-        print "iters:", iters
 
 
 if __name__ == '__main__':
@@ -76,6 +75,5 @@ if __name__ == '__main__':
     e = 0.001
     y = 1
     v = ValueItr()
-    for i in range (1,4):
-        print "wind case", i
+    for i in range(1, 4):
         v.value_iteration(max_iters=MAX_ITERS, discount=y, e=e, wind_case=i)
