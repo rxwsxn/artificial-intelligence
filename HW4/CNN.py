@@ -36,38 +36,50 @@ class NeuralNetwork(object):
             X_new[:, 1:] = X
         elif how == 'row':
             X_new = np.ones((X.shape[0] + 1, X.shape[1]))
-#            print(X)
+#            #printX)
             X_new[1:, :] = X
-#            print(X_new)
-        return X_new
+#            #printX_new)
+        return np.nan_to_num(X_new)
     
-    def _sigmoid(self, X, deriv=False):
-        one = np.ones(X.shape, dtype=np.float)
-#        print(np.subtract(one, X))
+    def _sigmoid(self, X, count, deriv=False):
+        X = X.astype(dtype='float128')
+        one = np.ones(X.shape, dtype='float128')
+#        #printnp.subtract(one, X))
         if deriv:
             return np.multiply(X, np.subtract(one, X))
-        return np.divide(one, (np.add(one, np.exp(np.negative(X)))))
+        # if count <= 4:
+            #print"THIS IS NEG X", count, type(np.negative(X)), np.negative(X))
+        return np.nan_to_num(np.divide(one, (np.add(one, np.exp(np.negative(X))))))
 
-    def _forward(self, X):
+    def _forward(self, X, count):
         net_input = self._add_bias_unit(X, how='column')
-#        print(self.w1)
+        #print"THIS IS W1", count, type(self.w1), self.w1)
         net_hidden = self.w1.dot(net_input.T)
-#        print(self.w1)
-        act_hidden = self._sigmoid(net_hidden)
+        #print"THIS IS NET HIDDEN", count, type(net_hidden), net_hidden)
+        act_hidden = self._sigmoid(net_hidden, count=count)
+        #print"THIS IS ACT HIDDEN", count, type(act_hidden), act_hidden)
         act_hidden = self._add_bias_unit(act_hidden, how='row')
+        #print"THIS IS ACT HIDDEN AFTER BIAS", count, type(act_hidden), act_hidden)
+        #print"THIS IS W2", count, self.w2)
+        act_hidden = np.nan_to_num(act_hidden)
+        self.w2 = np.nan_to_num(self.w2)
         net_out = self.w2.dot(act_hidden)
-#        print(act_hidden)
-        act_out = self._sigmoid(net_out)
-        return net_input, net_hidden, act_hidden, net_out, act_out
+        #print"THIS IS NET OUT", count, net_out)
+#        #printact_hidden)
+        act_out = self._sigmoid(net_out, count=count)
+        #print"THIS IS ACT OUT IN FORWARD", count, act_out)
+        return np.nan_to_num(net_input), np.nan_to_num(net_hidden), np.nan_to_num(act_hidden), np.nan_to_num(net_out), np.nan_to_num(act_out)
     
-    def _backward(self, net_input, net_hidden, act_hidden, act_out, y):
+    def _backward(self, net_input, net_hidden, act_hidden, act_out, y, count):
         sigma3 = np.subtract(act_out, y)
         net_hidden = self._add_bias_unit(net_hidden, how='row')
-        sigma2 = self.w2.T.dot(sigma3) * self._sigmoid(net_hidden, True)
+        sigma2 = self.w2.T.dot(sigma3) * self._sigmoid(net_hidden, deriv=True, count=count)
         sigma2 = sigma2[1:, :]
         grad1 = sigma2.dot(net_input)
         grad2 = sigma3.dot(act_hidden.T)
-        return grad1, grad2
+        #print'THIS IS ACT_OUT IN BACKWARD', act_out)
+        #print'THIS IS Y IN BACKWARD', y)
+        return np.nan_to_num(grad1), np.nan_to_num(grad2)
 
     def _error(self, y, output):
         l1_term = self._l1_reg_loss(self.l1, self.w1, self.w2)
@@ -86,25 +98,27 @@ class NeuralNetwork(object):
         return w1_loss + w2_loss
 
     def _backprop_step(self, X, y, count):
-        net_input, net_hidden, act_hidden, net_out, act_out = self._forward(X)
+        net_input, net_hidden, act_hidden, net_out, act_out = self._forward(X, count)
         y = y.T
 
-        grad1, grad2 = self._backward(net_input, net_hidden, act_hidden, act_out, y)
-#        print(grad1)
+        grad1, grad2 = self._backward(net_input, net_hidden, act_hidden, act_out, y, count)
+        #print"THIS IS GRAD2 FROM BACKWARD IN BACKPROP", grad2)
+
         grad1 = pd.DataFrame(grad1)
         grad2 = pd.DataFrame(grad2)
-        
+
         # regularize
         w1 = pd.DataFrame(self.w1)
         w2 = pd.DataFrame(self.w2)
-        
-        grad1.iloc[:, 1:] += (w1.iloc[:, 1:] * (self.l1 + self.l2))
-        grad2.iloc[:, 1:] += (w2.iloc[:, 1:] * (self.l1 + self.l2))
-        if count <= 2:
-            print(grad1.as_matrix())
+        #print'THIS IS GRAD2 ILOC : 1: IN BACKPROP', np.add(grad2.iloc[:, 1:], w2.iloc[:, 1:] * self.l1 + self.l2))
+
+        grad1.iloc[:, 1:] = np.add(grad1.iloc[:, 1:], w1.iloc[:, 1:] * (self.l1 + self.l2))
+        grad2.iloc[:, 1:] = np.add(grad2.iloc[:, 1:], w2.iloc[:, 1:] * (self.l1 + self.l2))
+        #print"THIS IS W2 AFTER ILOC IN BACKPROP", w2.iloc[:, 1:] * (self.l1 + self.l2))
+        #print"THIS IS GRAD2 AFTER ILOC IN BACKPROP", grad2)
         error = self._error(y, act_out)
         
-        return error, grad1.as_matrix(), grad2.as_matrix()
+        return error, np.nan_to_num(grad1.as_matrix()), np.nan_to_num(grad2.as_matrix())
     
     def _one_hot(self, y, n_classes):
         one_hot_encoded = pd.get_dummies(y)
@@ -142,13 +156,16 @@ class NeuralNetwork(object):
                 count += 1
                 # update weights
                 error, grad1, grad2 = self._backprop_step(Xi, yi, count)
+                #print"THIS IS GRAD2 BEFORE SETTING IN FIT", grad2)
+                #print"THIS IS W2 IN FIT", self.w2)
                 epoch_errors.append(error)
-#                if count <= 2:
-#                    print(self.w1)
-#                    print(self.learning_rate)
-#                    print(grad1)
+#                if count <= 4:
+#                    #printself.w1)
+#                    #printself.learning_rate)
+#                    #printgrad1)
                 self.w1 = np.subtract(self.w1, self.learning_rate * grad1)
                 self.w2 = np.subtract(self.w2, self.learning_rate * grad2)
+                #print"THIS IS GRAD2 AFTER SETTING IN FIT", grad2)
             self.error_.append(np.mean(epoch_errors))
         return self
     
