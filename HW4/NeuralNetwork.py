@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.feature_selection import VarianceThreshold
+from sklearn.model_selection import KFold
 
 
 class NeuralNetwork(object):
@@ -177,6 +176,9 @@ class NeuralNetwork(object):
     def score(self, X, y):
         y_hat = self.predict(X)
         return np.sum(y == y_hat) / float(X.shape[0])
+    
+    def mean_error(self):
+        return np.mean(self.error_)
 
 
 
@@ -198,16 +200,20 @@ y = df['label']
 X = df.loc[:, df.columns != 'label']
 classes = np.unique(y)
 
+
+kfold = KFold(n_splits=6, random_state=0)
 net = NeuralNetwork(classes=classes,
                     n_features=len(X.columns),
-                    n_hidden_units=300,
+                    n_hidden_units=100,
                     l2=0.5,
                     l1=0.0,
-                    epochs=400,
+                    epochs=300,
                     learning_rate=0.01,
                     n_batches=25,
                     random_seed=123)
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=42)
-net.fit(X_train, y_train)
-score = net.score(X_test, y_test)
-print(score)
+for train, test in kfold.split(X):
+    net.fit(X[train], y[train])
+    score = net.score(X[test], y[test])
+    cv = 1 - net.mean_error()
+    print(score)
+    print(cv)
