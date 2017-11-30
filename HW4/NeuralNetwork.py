@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import KFold
+from sklearn.model_selection import ShuffleSplit
 
 
 class NeuralNetwork(object):
@@ -85,7 +85,7 @@ class NeuralNetwork(object):
     def _error(self, y, output):
         l1_term = self._l1_reg_loss(self.l1, self.w1, self.w2)
         l2_term = self._l2_reg_loss(self.l2, self.w1, self.w2)
-        error = self._cross_entropy(output, y) + l1_term + l2_term
+        error = self._cross_entropy(output, y)
         return 0.5 * np.mean(error)
 
     def _l1_reg_loss(self, reg_lambda, w1, w2):
@@ -175,7 +175,7 @@ class NeuralNetwork(object):
 
     def score(self, X, y):
         y_hat = self.predict(X)
-        return np.sum(y == y_hat) / float(X.shape[0])
+        return 1 - np.sum(y == y_hat) / float(X.shape[0])
     
     def mean_error(self):
         return np.mean(self.error_)
@@ -201,19 +201,19 @@ X = df.loc[:, df.columns != 'label']
 classes = np.unique(y)
 
 
-kfold = KFold(n_splits=6, random_state=0)
 net = NeuralNetwork(classes=classes,
                     n_features=len(X.columns),
-                    n_hidden_units=100,
+                    n_hidden_units=200,
                     l2=0.5,
                     l1=0.0,
                     epochs=300,
                     learning_rate=0.01,
                     n_batches=25,
-                    random_seed=123)
-for train, test in kfold.split(X):
-    net.fit(X[train], y[train])
-    score = net.score(X[test], y[test])
-    cv = 1 - net.mean_error()
-    print(score)
-    print(cv)
+                    random_seed=0)
+ss = ShuffleSplit(n_splits=6, test_size=0.25, random_state=0)
+for train, test in ss.split(X):
+    net.fit(X.iloc[train], y.iloc[train])
+    score = net.score(X.iloc[test], y.iloc[test])
+    error = 1 - score
+    print(score, error)
+    
