@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import ShuffleSplit
-
+import  timeit
 
 class NeuralNetwork(object):
     
@@ -200,7 +200,6 @@ y = df['label']
 X = df.loc[:, df.columns != 'label']
 classes = np.unique(y)
 
-
 net = NeuralNetwork(classes=classes,
                     n_features=len(X.columns),
                     n_hidden_units=200,
@@ -212,8 +211,15 @@ net = NeuralNetwork(classes=classes,
                     random_seed=0)
 ss = ShuffleSplit(n_splits=6, test_size=0.25, random_state=0)
 for train, test in ss.split(X):
+    start = timeit.timeit()
+    
     net.fit(X.iloc[train], y.iloc[train])
     score = net.score(X.iloc[test], y.iloc[test])
     error = 1 - score
+    
+    end = timeit.timeit()
+    print("Time elapsed is:", end - start, ".")
+    
     print(score, error)
     
+
