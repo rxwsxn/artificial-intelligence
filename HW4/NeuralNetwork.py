@@ -200,11 +200,11 @@ classes = np.unique(y)
 
 net = NeuralNetwork(classes=classes,
                     n_features=len(X.columns),
-                    n_hidden_units=50,
+                    n_hidden_units=300,
                     l2=0.5,
                     l1=0.0,
-                    epochs=300,
-                    learning_rate=0.001,
+                    epochs=400,
+                    learning_rate=0.01,
                     n_batches=25,
                     random_seed=123)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=42)
