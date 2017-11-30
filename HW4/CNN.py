@@ -1,26 +1,26 @@
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.feature_extraction import DictVectorizer
+from sklearn.feature_selection import VarianceThreshold
 
 
 class NeuralNetwork(object):
+    
     def __init__(self, classes, n_features, n_hidden_units=30,
                  l1=0.0, l2=0.0, epochs=500, learning_rate=0.01,
                  n_batches=1, random_seed=None):
-
         if random_seed:
             np.random.seed(random_seed)
         self.classes = classes
         self.n_classes = len(classes)
         self.n_features = n_features
         self.n_hidden_units = n_hidden_units
+        self.n_batches = n_batches
         self.w1, self.w2 = self._init_weights()
         self.l1 = l1
         self.l2 = l2
         self.epochs = epochs
         self.learning_rate = learning_rate
-        self.n_batches = n_batches
 
     def _init_weights(self):
         w1 = np.random.uniform(-1.0, 1.0,
@@ -37,15 +37,12 @@ class NeuralNetwork(object):
             X_new[:, 1:] = X
         elif how == 'row':
             X_new = np.ones((X.shape[0] + 1, X.shape[1]))
-            #            #printX)
             X_new[1:, :] = X
-        #            #printX_new)
         return np.nan_to_num(X_new)
 
     def _sigmoid(self, X, count, deriv=False):
         X = X.astype(dtype='float128')
         one = np.ones(X.shape, dtype='float128')
-        #        #printnp.subtract(one, X))
         if deriv:
             return np.multiply(X, np.subtract(one, X))
             # if count <= 4:
@@ -54,18 +51,21 @@ class NeuralNetwork(object):
 
     def _forward(self, X, count):
         net_input = self._add_bias_unit(X, how='column')
-        # print"THIS IS W1", count, type(self.w1), self.w1)
+        if count == 90000:
+            print("THIS IS W1", count, type(self.w1), self.w1)
         net_hidden = self.w1.dot(net_input.T)
-        # print"THIS IS NET HIDDEN", count, type(net_hidden), net_hidden)
+        if count == 90000:
+            print("THIS IS NET HIDDEN", count, type(net_hidden), net_hidden)
         act_hidden = self._sigmoid(net_hidden, count=count)
-        # print"THIS IS ACT HIDDEN", count, type(act_hidden), act_hidden)
+        if count == 90000:
+            print("THIS IS ACT HIDDEN", count, type(act_hidden), act_hidden)
         act_hidden = self._add_bias_unit(act_hidden, how='row')
-        # print"THIS IS ACT HIDDEN AFTER BIAS", count, type(act_hidden), act_hidden)
-        # print"THIS IS W2", count, self.w2)
-        act_hidden = np.nan_to_num(act_hidden)
-        self.w2 = np.nan_to_num(self.w2)
+        if count == 90000:
+            print("THIS IS W2", count, self.w2)
         net_out = self.w2.dot(act_hidden)
-        # print"THIS IS NET OUT", count, net_out)
+        if count == 90000:
+            print("THIS IS ACT HIDDEN AFTER BIAS", count, type(act_hidden), act_hidden)
+            print("THIS IS NET OUT", count, net_out)
         #        #printact_hidden)
         act_out = self._sigmoid(net_out, count=count)
         # print"THIS IS ACT OUT IN FORWARD", count, act_out)
@@ -86,8 +86,7 @@ class NeuralNetwork(object):
     def _error(self, y, output):
         l1_term = self._l1_reg_loss(self.l1, self.w1, self.w2)
         l2_term = self._l2_reg_loss(self.l2, self.w1, self.w2)
-        error = self._cross_entropy(output, y)
-#        print(error)
+        error = self._cross_entropy(output, y) + l1_term + l2_term
         return 0.5 * np.mean(error)
 
     def _l1_reg_loss(self, reg_lambda, w1, w2):
@@ -138,12 +137,12 @@ class NeuralNetwork(object):
 
     def predict(self, X):
         Xt = X.copy()
-        net_input, net_hidden, act_hidden, net_out, act_out = self._forward(Xt, 0)
-        return net_out.T
+        net_input, net_hidden, act_hidden, net_out, act_out = self._forward(Xt, 9)
+        return self.classes[np.argmax(net_out.T, axis=1)]
 
     def predict_proba(self, X):
         Xt = X.copy()
-        net_input, net_hidden, act_hidden, net_out, act_out = self._forward(Xt, 0)
+        net_input, net_hidden, act_hidden, net_out, act_out = self._forward(Xt, 9)
         return self._softmax(act_out.T)
     
     def fit(self, X, y):
@@ -152,10 +151,8 @@ class NeuralNetwork(object):
         y_data_enc = self._one_hot(y_data, self.n_classes)
         count = 0
         for i in range(self.epochs):
-
             X_mb = np.array_split(X_data, self.n_batches)
             y_mb = np.array_split(y_data_enc, self.n_batches)
-
             epoch_errors = []
             for Xi, yi in zip(X_mb, y_mb):
                 count += 1
@@ -168,18 +165,18 @@ class NeuralNetwork(object):
                 #                    #printself.w1)
                 #                    #printself.learning_rate)
                 #                    #printgrad1)
-                self.w1 = np.subtract(self.w1, self.learning_rate * grad1)
-                self.w2 = np.subtract(self.w2, self.learning_rate * grad2)
+                yi_pred = self.classes[np.argmax(self.predict_proba(Xi), axis=1)]
+                if not np.array_equal(yi_pred, yi):
+                    self.w1 = np.subtract(self.w1, self.learning_rate * grad1)
+                    self.w2 = np.subtract(self.w2, self.learning_rate * grad2)
                 # print"THIS IS GRAD2 AFTER SETTING IN FIT", grad2)
             self.error_.append(np.mean(epoch_errors))
             # print("THE ERROR", self.error_)
         return self
 
     def score(self, X, y):
-        y_hat = self.predict_proba(X)
-        print(self.error_)
-        return y, y_hat
-        # return np.sum(y == y_hat) / float(X.shape[0])
+        y_hat = self.predict(X)
+        return np.sum(y == y_hat) / float(X.shape[0])
 
 
 
@@ -189,19 +186,19 @@ names = names[:-1]
 names.append('label')
 f = open('input/training.csv')
 lines = f.readlines()
-X = pd.DataFrame(0, index=np.arange(len(lines)), columns=names)
+df = pd.DataFrame(0, index=np.arange(len(lines)), columns=names)
 for i, line in enumerate(lines):
     d = line.strip('\n').split(',')
-    X.loc[i, 'label'] = d[1].strip('"')
+    df.loc[i, 'label'] = d[1].strip('"')
     for ing in d[2:]:
         ing = ing.strip('"')
         if ing in names:
-            X.loc[i, ing] = 1
-y = X['label']
-if 'label' in X.columns:
-    X = X.drop('label', axis=1)
+            df.loc[i, ing] = 1
+y = df['label']
+X = df.loc[:, df.columns != 'label']
+classes = np.unique(y)
 
-net = NeuralNetwork(classes=y.unique(),
+net = NeuralNetwork(classes=classes,
                     n_features=len(X.columns),
                     n_hidden_units=50,
                     l2=0.5,
@@ -212,5 +209,5 @@ net = NeuralNetwork(classes=y.unique(),
                     random_seed=123)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=42)
 net.fit(X_train, y_train)
-result_y, result_y_hat = net.score(X_test, y_test)
-print(np.argmax(result_y_hat, axis=1))
+score = net.score(X_test, y_test)
+print(score)
